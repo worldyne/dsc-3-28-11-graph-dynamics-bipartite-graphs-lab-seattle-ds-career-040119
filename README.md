@@ -1,5 +1,5 @@
 
-# Network Dynamics: Bipartite Graphs - lab
+# Network Dynamics: Bipartite Graphs - Lab
 
 ## Introduction
 Let's put our understanding of bipartite graphs to practice. In this lab , we shall look at analyzing bipartite graph of individuals and organizations they belonged to, during the times of American revolution. We shall also look at making a meaningful visualization of the node relationships. 
@@ -21,7 +21,7 @@ This bipartite network contains membership information a number of people in dif
 
 The list includes well-known people such as the American activist Paul Revere. Left nodes represent persons and right nodes represent organisations. An edge between a person and an organization shows that the person was a member of the organisation.
 
-### Load Data
+## Load Data
 - Load the csv file into pandas dataframe and inspect its contents
 
 
@@ -133,7 +133,7 @@ df.head()
 
 Right so this is not an edge list, rather shows the relationships of individuals with organizations in a matrix form. We need to convert this data into an edge list dataframe. So lets get to it .
 
-### Create edge list
+## Create edge list
 - Convert the individual-club associations into an edge list. You can use the process we saw earlier via graph processing OR use some Python parsing goodness . 
 
 
@@ -244,7 +244,7 @@ edge_df.head(10)
 
 Great, this makes much more sense. Now we can move further and import this as a networkx graph. 
 
-### Convert edge list to `networkx` graph
+## Convert edge list to `networkx` graph
 
 -  Read each row as an **edge** with a **source** and a **target**. 
 -  Set `name` and `organization` attributes for each edge
@@ -313,7 +313,7 @@ print(popular_ppl)
     ['Hancock.John', 'Bradford.John', 'Edes.Benjamin', 'Barber.Nathaniel', 'Molineux.William', 'Swan.James', 'Adams.John', 'Powell.William', 'Winthrop.John', 'Condy.JamesFoster', 'Cooper.Samuel', 'Warren.Joseph', 'Revere.Paul', 'Urann.Thomas', 'Cheever.Ezekiel', 'Otis.James', 'Welles.Henry', 'Appleton.Nathaniel', 'Crafts.Thomas', 'Eayres.Joseph', 'Dennie.William', 'Avery.John', 'Greenleaf.William', 'Grant.Moses', 'Boynton.Richard', 'Davis.Caleb', 'Quincy.Josiah', 'Proctor.Edward', 'Barrett.Samuel', 'Pulling.John', 'Story.Elisha', 'Peck.Samuel', 'Wendell.Oliver', 'Church.Benjamin', 'Bass.Henry', 'Chase.Thomas', 'Parkman.Elias', 'Greenleaf.Joseph', 'Adams.Samuel', 'Ruddock.Abiel', 'Collson.Adam', 'Young.Thomas']
 
 
-### Calculate Degree
+## Calculate Degree
 - Calculate the connection `LoyalNine` origanization has.
 
 
@@ -400,4 +400,4 @@ plt.show()
 
 ## Summary 
 
-IN this lab, we saw how to process, analyze and visualize bipartite graphs. You can try adding more visual cues (i.e. popular people names) etc. to make it more revealing. Also, this looks great as compared to the graphs we plotted in earlier lessons. Visualizing large graphs require interactivity, ability to zoom in and out and filter components to only focus on required information. That is all outside the scope of this section. For now we\ll move on towards looking deeperinto communities and how can we make our analysis more efficient using clustering etc. 
+In this lab, we saw how to process, analyze and visualize bipartite graphs. You can try adding more visual cues (i.e. popular people names) etc. to make it more revealing. Also, this looks great as compared to the graphs we plotted in earlier lessons. Visualizing large graphs require interactivity, ability to zoom in and out and filter components to only focus on required information. That is all outside the scope of this section. For now we\ll move on towards looking deeperinto communities and how can we make our analysis more efficient using clustering etc. 
