@@ -1,5 +1,5 @@
 
-# Network Dynamics: Bipartite Graphs - lab
+# Network Dynamics: Bipartite Graphs - Lab
 
 ## Introduction
 Let's put our understanding of bipartite graphs to practice. In this lab , we shall look at analyzing bipartite graph of individuals and organizations they belonged to, during the times of American revolution. We shall also look at making a meaningful visualization of the node relationships. 
