@@ -1,40 +1,26 @@
 
-# Network Dynamics: Bipartite Graphs - Lab
+# Network Clustering - Lab
 
 ## Introduction
-Let's put our understanding of bipartite graphs to practice. In this lab , we shall look at analyzing bipartite graph of individuals and organizations they belonged to, during the times of American revolution. We shall also look at making a meaningful visualization of the node relationships. 
 
+In this lab you'll practice your clustering and visualization skills to investigate stackoverflow! Specifically, the dataset you'll ve investigating examines tags on stackoverflow. With this, you should be able to explore some of the related technologies currently in use by developers.
 
 ## Objectives
 You will be able to:
 
-- Understand and describe Bipartite graphs in comparison with uni-partite graphs
-- Define and analyze bipartite graphs in networkx
-- Understand how centrality measures work with bipartite graphs
-- Visualize Bipartite graphs
+* Implement network clustering with k-clique clustering
+* Implement network clustering with the Girvan-Newman algorithm
+* Visualize clusters
 
+## Load the Dataset
 
-## American Revolution Dataset
-
-This bipartite network contains membership information a number of people in different organisations dating back to the time before the American Revolution. We have this dataset available for you as a csv file `american-revolution.csv`. Load this into a dataframe and inspect the format. Remember we need an edge list to carry on with our analysis. 
-
-
-The list includes well-known people such as the American activist Paul Revere. Left nodes represent persons and right nodes represent organisations. An edge between a person and an organization shows that the person was a member of the organisation.
-
-## Load Data
-- Load the csv file into pandas dataframe and inspect its contents
+Load the dataset from the `stack-overflow-tag-network/stack_network_links.csv` file. For now, simply load the file as a standard pandas DataFrame.
 
 
 ```python
-## Load necessary libraries
+#Your code here
 import pandas as pd
-import networkx as nx
-import warnings
-warnings.filterwarnings("ignore")
-import matplotlib.pyplot as plt
-
-# REad and inspect the dataset
-df = pd.read_csv('american-revolution.csv')
+df = pd.read_csv('stack-overflow-tag-network/stack_network_links.csv')
 df.head()
 ```
 
@@ -59,71 +45,41 @@ df.head()
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Unnamed: 0</th>
-      <th>StAndrewsLodge</th>
-      <th>LoyalNine</th>
-      <th>NorthCaucus</th>
-      <th>LongRoomClub</th>
-      <th>TeaParty</th>
-      <th>BostonCommittee</th>
-      <th>LondonEnemies</th>
+      <th>source</th>
+      <th>target</th>
+      <th>value</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>Adams.John</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
+      <td>azure</td>
+      <td>.net</td>
+      <td>20.933192</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>Adams.Samuel</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-      <td>1</td>
+      <td>sql-server</td>
+      <td>.net</td>
+      <td>32.322524</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>Allen.Dr</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
+      <td>asp.net</td>
+      <td>.net</td>
+      <td>48.407030</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>Appleton.Nathaniel</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
+      <td>entity-framework</td>
+      <td>.net</td>
+      <td>24.370903</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>Ash.Gilbert</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
+      <td>wpf</td>
+      <td>.net</td>
+      <td>32.350925</td>
     </tr>
   </tbody>
 </table>
@@ -131,273 +87,398 @@ df.head()
 
 
 
-Right so this is not an edge list, rather shows the relationships of individuals with organizations in a matrix form. We need to convert this data into an edge list dataframe. So lets get to it .
+## Transform the Dataset into a Network Graph using NetworkX
 
-## Create edge list
-- Convert the individual-club associations into an edge list. You can use the process we saw earlier via graph processing OR use some Python parsing goodness . 
+Transform the dataset from a Pandas DataFrame into a NetworkX graph.
 
 
 ```python
-# Create Edge list from CSV file
-csv = open("american-revolution.csv")
+#Your code here
+import networkx as nx
 
-edge = []
-
-columns = csv.readline().strip().split(',')[1:]
-for line in csv:
-    tokens = line.strip().split(',')
-    row = tokens[0]
-    for column, cell in zip(columns,tokens[1:]):
-        edge.append((row,column,cell))
-print(edge[:10])    
-
-# Save edge list as pandas dataframe and view head
-edge_df = pd.DataFrame(edge, columns=['name', 'organization', 'edge'])
-edge_df = edge_df[edge_df.edge != '0'][['name', 'organization']]
-edge_df.head(10)
+G = nx.Graph()
+for row in df.index:
+    source = df.source[row]
+    target = df.target[row]
+    weight = df.value[row]
+    G.add_edge(source, target, weight=weight)
+print(len(G.nodes))
 ```
 
-    [('Adams.John', 'StAndrewsLodge', '0'), ('Adams.John', 'LoyalNine', '0'), ('Adams.John', 'NorthCaucus', '1'), ('Adams.John', 'LongRoomClub', '1'), ('Adams.John', 'TeaParty', '0'), ('Adams.John', 'BostonCommittee', '0'), ('Adams.John', 'LondonEnemies', '0'), ('Adams.Samuel', 'StAndrewsLodge', '0'), ('Adams.Samuel', 'LoyalNine', '0'), ('Adams.Samuel', 'NorthCaucus', '1')]
+    115
 
 
+## Create an Initial Graph Visualization
 
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>name</th>
-      <th>organization</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>2</th>
-      <td>Adams.John</td>
-      <td>NorthCaucus</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>Adams.John</td>
-      <td>LongRoomClub</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>Adams.Samuel</td>
-      <td>NorthCaucus</td>
-    </tr>
-    <tr>
-      <th>10</th>
-      <td>Adams.Samuel</td>
-      <td>LongRoomClub</td>
-    </tr>
-    <tr>
-      <th>12</th>
-      <td>Adams.Samuel</td>
-      <td>BostonCommittee</td>
-    </tr>
-    <tr>
-      <th>13</th>
-      <td>Adams.Samuel</td>
-      <td>LondonEnemies</td>
-    </tr>
-    <tr>
-      <th>16</th>
-      <td>Allen.Dr</td>
-      <td>NorthCaucus</td>
-    </tr>
-    <tr>
-      <th>23</th>
-      <td>Appleton.Nathaniel</td>
-      <td>NorthCaucus</td>
-    </tr>
-    <tr>
-      <th>26</th>
-      <td>Appleton.Nathaniel</td>
-      <td>BostonCommittee</td>
-    </tr>
-    <tr>
-      <th>28</th>
-      <td>Ash.Gilbert</td>
-      <td>StAndrewsLodge</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-Great, this makes much more sense. Now we can move further and import this as a networkx graph. 
-
-## Convert edge list to `networkx` graph
-
--  Read each row as an **edge** with a **source** and a **target**. 
--  Set `name` and `organization` attributes for each edge
--  Visualize the graph
+Next, create an initial visualization of the network.
 
 
 ```python
-# Create and draw the graph
-plt.figure(figsize=(10, 6))
-G = nx.from_pandas_edgelist(edge_df, source='name', target='organization') 
-nx.draw(G, alpha =0.3)
+#Your code here
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+plt.figure(figsize=(35,20))
+nx.draw(G, pos=nx.spring_layout(G, k=2, seed=10), with_labels=True,
+        alpha=.8, node_size=20000, font_weight="bold", font_size=18)
 ```
 
 
-![png](index_files/index_9_0.png)
+![png](index_files/index_6_0.png)
 
 
-We can see the graph is not very revealing at the moment. Adding labels to it would just make it look worse due to occlusion. Also, both individuals and organizations are being shown similarly. How about differentiating clubs from individuals using visual cues like size and color. Let's have a go at it. 
+## Perform an Initial Clustering using k-clique Clustering
 
-## Visualize the Graph
-
-We would need some list comprehensions and other coding skills to get a meaningful visualization. Let's try to break it down and do it bit by bit. As a first step do the following:
-- Make a list of all the organizations from our final edge list dataframe. 
+Begin to explore the impact of using different values of k.
 
 
 ```python
-# Make a list of the organizations,
-orgs = list(set(edge_df.organization))
-orgs
+#Your code here
+for i in range(2,6):
+    kc_clusters = list(nx.algorithms.community.k_clique_communities(G, k=i))
+    print("With k={}, {} clusters form.".format(i, len(kc_clusters)))
+```
+
+    With k=2, 6 clusters form.
+    With k=3, 16 clusters form.
+    With k=4, 5 clusters form.
+    With k=5, 5 clusters form.
+
+
+
+```python
+kc_clusters = list(nx.algorithms.community.k_clique_communities(G, k=2))
+```
+
+## Visualize The Clusters Produced from the K-Clique Algorithm
+
+> **Level-Up:** Experiment with different `nx.draw()` settings. See the [draw documentation here](https://networkx.github.io/documentation/networkx-1.10/reference/generated/networkx.drawing.nx_pylab.draw_networkx.html) for a full list. Some recommended settings that you've previewed include the position parameter `pos`, `with_labels=True`, `node_color`, `alpha`, `node_size`, `font_weight` and `font_size`. Note that `nx.spring_layout(G)` is particularly useful for laying out a well formed network. With this, you can pass in parameters for the relative edge distance via `k` and set a `random_seed` to have reproducible results as in `nx.spring_layout(G, k=2.66, seed=10)`. For more details, see the [spring_layout documentation here](https://networkx.github.io/documentation/networkx-1.10/reference/generated/networkx.drawing.layout.spring_layout.html?highlight=spring%20layout#networkx.drawing.layout.spring_layout).
+
+
+```python
+colors = [("teal","#1cf0c7"),
+         ("workzone_yellow","#ffd43d"),
+         ("light-blue","#00b3e6"),
+         ("medium-blue","#32cefe"),
+         ("gray","#efefef"),
+         ("dark-blue", "#1443ff")]
+color_dict = dict(colors)
+
+fig = plt.figure(figsize=(35,20))
+for n, ci in enumerate(kc_clusters):
+    ci = G.subgraph(ci)
+    nx.draw(ci, pos=nx.spring_layout(G, k=2, seed=10), with_labels=True, node_color=colors[n%len(colors)][1],
+            alpha=.8, node_size=20000, font_weight="bold", font_size=18)
+```
+
+
+![png](index_files/index_11_0.png)
+
+
+
+```python
+kc_clusters = list(nx.algorithms.community.k_clique_communities(G, k=3))
+colors = ["#1cf0c7","#ffd43d","#00b3e6","#32cefe","#efefef","#2b2b2b", "#1443ff",
+          "#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c",
+          "#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928"]
+fig = plt.figure(figsize=(35,20))
+for n, ci in enumerate(kc_clusters):
+    ci = G.subgraph(ci)
+    nx.draw(ci, pos=nx.spring_layout(G, k=2.5, seed=10), with_labels=True, node_color=colors[n],
+            alpha=.8, node_size=20000, font_weight="bold", font_size=18)
+```
+
+
+![png](index_files/index_12_0.png)
+
+
+## Perform an Alternative Clustering Using the Girvan-Newman Algorithm
+
+Recluster the network using the Girvan-Newman algorithm. Remember that this will give you a list of cluster lists corresponding to the clusters that form from removing the top n edges according to some metric, typically edge betweeness.
+
+
+```python
+#Your code here
+gn_clusters = list(nx.algorithms.community.centrality.girvan_newman(G))
+for n, clusters in enumerate(gn_clusters):
+    print("After removing {} edges, there are {} clusters.".format(n, len(clusters)))
+```
+
+    After removing 0 edges, there are 7 clusters.
+    After removing 1 edges, there are 8 clusters.
+    After removing 2 edges, there are 9 clusters.
+    After removing 3 edges, there are 10 clusters.
+    After removing 4 edges, there are 11 clusters.
+    After removing 5 edges, there are 12 clusters.
+    After removing 6 edges, there are 13 clusters.
+    After removing 7 edges, there are 14 clusters.
+    After removing 8 edges, there are 15 clusters.
+    After removing 9 edges, there are 16 clusters.
+    After removing 10 edges, there are 17 clusters.
+    After removing 11 edges, there are 18 clusters.
+    After removing 12 edges, there are 19 clusters.
+    After removing 13 edges, there are 20 clusters.
+    After removing 14 edges, there are 21 clusters.
+    After removing 15 edges, there are 22 clusters.
+    After removing 16 edges, there are 23 clusters.
+    After removing 17 edges, there are 24 clusters.
+    After removing 18 edges, there are 25 clusters.
+    After removing 19 edges, there are 26 clusters.
+    After removing 20 edges, there are 27 clusters.
+    After removing 21 edges, there are 28 clusters.
+    After removing 22 edges, there are 29 clusters.
+    After removing 23 edges, there are 30 clusters.
+    After removing 24 edges, there are 31 clusters.
+    After removing 25 edges, there are 32 clusters.
+    After removing 26 edges, there are 33 clusters.
+    After removing 27 edges, there are 34 clusters.
+    After removing 28 edges, there are 35 clusters.
+    After removing 29 edges, there are 36 clusters.
+    After removing 30 edges, there are 37 clusters.
+    After removing 31 edges, there are 38 clusters.
+    After removing 32 edges, there are 39 clusters.
+    After removing 33 edges, there are 40 clusters.
+    After removing 34 edges, there are 41 clusters.
+    After removing 35 edges, there are 42 clusters.
+    After removing 36 edges, there are 43 clusters.
+    After removing 37 edges, there are 44 clusters.
+    After removing 38 edges, there are 45 clusters.
+    After removing 39 edges, there are 46 clusters.
+    After removing 40 edges, there are 47 clusters.
+    After removing 41 edges, there are 48 clusters.
+    After removing 42 edges, there are 49 clusters.
+    After removing 43 edges, there are 50 clusters.
+    After removing 44 edges, there are 51 clusters.
+    After removing 45 edges, there are 52 clusters.
+    After removing 46 edges, there are 53 clusters.
+    After removing 47 edges, there are 54 clusters.
+    After removing 48 edges, there are 55 clusters.
+    After removing 49 edges, there are 56 clusters.
+    After removing 50 edges, there are 57 clusters.
+    After removing 51 edges, there are 58 clusters.
+    After removing 52 edges, there are 59 clusters.
+    After removing 53 edges, there are 60 clusters.
+    After removing 54 edges, there are 61 clusters.
+    After removing 55 edges, there are 62 clusters.
+    After removing 56 edges, there are 63 clusters.
+    After removing 57 edges, there are 64 clusters.
+    After removing 58 edges, there are 65 clusters.
+    After removing 59 edges, there are 66 clusters.
+    After removing 60 edges, there are 67 clusters.
+    After removing 61 edges, there are 68 clusters.
+    After removing 62 edges, there are 69 clusters.
+    After removing 63 edges, there are 70 clusters.
+    After removing 64 edges, there are 71 clusters.
+    After removing 65 edges, there are 72 clusters.
+    After removing 66 edges, there are 73 clusters.
+    After removing 67 edges, there are 74 clusters.
+    After removing 68 edges, there are 75 clusters.
+    After removing 69 edges, there are 76 clusters.
+    After removing 70 edges, there are 77 clusters.
+    After removing 71 edges, there are 78 clusters.
+    After removing 72 edges, there are 79 clusters.
+    After removing 73 edges, there are 80 clusters.
+    After removing 74 edges, there are 81 clusters.
+    After removing 75 edges, there are 82 clusters.
+    After removing 76 edges, there are 83 clusters.
+    After removing 77 edges, there are 84 clusters.
+    After removing 78 edges, there are 85 clusters.
+    After removing 79 edges, there are 86 clusters.
+    After removing 80 edges, there are 87 clusters.
+    After removing 81 edges, there are 88 clusters.
+    After removing 82 edges, there are 89 clusters.
+    After removing 83 edges, there are 90 clusters.
+    After removing 84 edges, there are 91 clusters.
+    After removing 85 edges, there are 92 clusters.
+    After removing 86 edges, there are 93 clusters.
+    After removing 87 edges, there are 94 clusters.
+    After removing 88 edges, there are 95 clusters.
+    After removing 89 edges, there are 96 clusters.
+    After removing 90 edges, there are 97 clusters.
+    After removing 91 edges, there are 98 clusters.
+    After removing 92 edges, there are 99 clusters.
+    After removing 93 edges, there are 100 clusters.
+    After removing 94 edges, there are 101 clusters.
+    After removing 95 edges, there are 102 clusters.
+    After removing 96 edges, there are 103 clusters.
+    After removing 97 edges, there are 104 clusters.
+    After removing 98 edges, there are 105 clusters.
+    After removing 99 edges, there are 106 clusters.
+    After removing 100 edges, there are 107 clusters.
+    After removing 101 edges, there are 108 clusters.
+    After removing 102 edges, there are 109 clusters.
+    After removing 103 edges, there are 110 clusters.
+    After removing 104 edges, there are 111 clusters.
+    After removing 105 edges, there are 112 clusters.
+    After removing 106 edges, there are 113 clusters.
+    After removing 107 edges, there are 114 clusters.
+    After removing 108 edges, there are 115 clusters.
+
+
+## Create a Visualization Wrapper
+
+Now that you have an idea of how splintered the network becomes based on the number of edges removed, you'll want to examine some of the subsequent groups that gradually break apart. Since the network is quiet complex to start with, using subplots is not a great option; each subplot would be too small to accurately read. Create a visualization function `plot_girvan_newman(G,clusters)` which takes a NetworkX graph object as well as one of the clusters from the output of the Girvan-Newman algorithm above and plots the network with a unique color for each cluster.
+
+> **Level-Up:** Experiment with different `nx.draw()` settings. See the [draw documentation here](https://networkx.github.io/documentation/networkx-1.10/reference/generated/networkx.drawing.nx_pylab.draw_networkx.html) for a full list. Some recommended settings that you've previewed include the position parameter `pos`, `with_labels=True`, `node_color`, `alpha`, `node_size`, `font_weight` and `font_size`. Note that `nx.spring_layout(G)` is particularly useful for laying out a well formed network. With this, you can pass in parameters for the relative edge distance via `k` and set a `random_seed` to have reproducible results as in `nx.spring_layout(G, k=2.66, seed=10)`. For more details, see the [spring_layout documentation here](https://networkx.github.io/documentation/networkx-1.10/reference/generated/networkx.drawing.layout.spring_layout.html?highlight=spring%20layout#networkx.drawing.layout.spring_layout).
+
+
+```python
+def plot_girvan_newman(G, clusters):
+    #Your code here
+    fig = plt.figure(figsize=(35,20))
+    colors = ["#1cf0c7","#ffd43d","#00b3e6","#32cefe","#efefef",
+          "#1443ff","#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99",
+          "#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99",
+          "#b15928","#8dd3c7","#ffffb3","#bebada","#fb8072","#80b1d3",
+          "#fdb462","#b3de69","#fccde5","#d9d9d9","#bc80bd","#ccebc5",
+          "#ffed6f","#bf812d","#dfc27d","#f6e8c3","#f5f5f5","#c7eae5",
+          "#80cdc1", "#35978f", "#01665e", "#003c30"]
+    for n , c in enumerate(clusters):
+        ci = G.subgraph(c)
+        #Other recommend random_seed choices are 3,7, 10, K value of 2.5 also seem to work well
+        nx.draw(ci, pos=nx.spring_layout(G, k=2.66, seed=10), with_labels=True, node_color=colors[n],
+                alpha=.8, node_size=20000, font_weight="bold", font_size=20)
+    plt.show()
+```
+
+## Visualize the Various Clusters that Form Throughout the Girvan-Newman Algorithm
+
+Use your function to visualize the various clusters that form throughout the Girvan-Newman algorithm as you remove more and more edges from the network.
+
+
+```python
+plot_girvan_newman(G, gn_clusters[5])
+```
+
+
+![png](index_files/index_18_0.png)
+
+
+
+```python
+plot_girvan_newman(G, gn_clusters[15])
+```
+
+
+![png](index_files/index_19_0.png)
+
+
+
+```python
+plot_girvan_newman(G, gn_clusters[24])
+```
+
+
+![png](index_files/index_20_0.png)
+
+
+## Cluster Decay Rate
+
+Create a visual to help yourself understand the rate at which clusters of this network formed versus the number of edges removed.
+
+> **Level-Up**: Based on your graphic, what would you predict is an appropriate number of clusters? 
+
+
+```python
+#Your code here
+import seaborn as sns
+sns.set_style('darkgrid')
+
+y = [len(cluster) for cluster in gn_clusters]
+x = [n+1 for n in range(len(gn_clusters))]
+plt.plot(x,y, color="#00b3e6")
+plt.title('Number of Clusters versus Number of Edges Removed')
+plt.ylabel('Number of Clusters')
+plt.xlabel('Number of Edges Removed')
 ```
 
 
 
 
-    ['NorthCaucus',
-     'BostonCommittee',
-     'LongRoomClub',
-     'LondonEnemies',
-     'LoyalNine',
-     'StAndrewsLodge',
-     'TeaParty']
+    Text(0.5, 0, 'Number of Edges Removed')
 
 
 
-- Similarly make a list of all unique individuals in the dataframe
+
+![png](index_files/index_22_1.png)
+
 
 
 ```python
-# Make a list of the people
-ppl = list(set(edge_df.name))
-print(ppl)
-```
+#While an initial investigation such as the one above does not appear to be particularly informative,
+#exploring additional cluster metrics reveals more interesting patterns.
+import numpy as np
 
-    ['Brackett.Jos', 'Flagg.Josiah', 'Chadwell.Mr', 'Burt.Benjamin', 'Howard.Samuel', 'Roylson.Thomas', 'Hunnewell.Jonathan', 'Whitwell.William', 'Fenno.Samuel', 'Collier.Gershom', 'Hancock.John', 'Kimball.Thomas', 'Isaac.Pierce', 'Hammond.Samuel', 'Hooton.John', 'Bradlee.Nathaniel', 'Hopkins.Caleb', 'Bradford.John', 'MacKintosh.Capt', 'Wingfield.William', 'Loring.Matthew', 'Boit.John', 'Edes.Benjamin', 'Brimmer.Herman', 'Prentiss.Henry', 'Spurr.John', 'Stevens.Ebenezer', 'Barber.Nathaniel', 'Williams.Jeremiah', 'Breck.William', 'May.John', 'White.Samuel', 'Merrit.John', 'Ballard.John', 'Moody.Samuel', 'Stoddard.Jonathan', 'Boyer.Peter', 'Moore.Thomas', 'Prince.Job', 'Cazneau.Capt', 'Brown.Hugh', 'Bradlee.David', 'Collins.Ezra', 'Hoskins.William', 'Hitchborn.Nathaniel', 'Pitts.Samuel', 'Whitwell.Samuel', 'Colesworthy.Gilbert', 'Cleverly.Stephen', 'Phillips.William', 'Obear.Israel', 'Austin.Benjamin', 'Waldo.Benjamin', 'Molineux.William', 'Swan.James', 'Tyler.Royall', 'Shed.Joseph', 'Peck.Thomas', 'Adams.John', 'Powell.William', 'Starr.James', 'Winthrop.John', 'Condy.JamesFoster', 'Bolter.Thomas', 'Mason.Jonathan', 'McAlpine.William', 'Jefferds.Unknown', 'Stoddard.Asa', 'Brimmer.Martin', 'Sweetser.John', 'Cooper.Samuel', 'Warren.Joseph', 'Broomfield.Henry', 'Prince.John', 'Phillips.Samuel', 'Kinnison.David', 'Greenough.Newn', 'Davis.Robert', 'Gore.Samuel', 'Webb.Joseph', 'Symmes.John', 'Willis.Nathaniel', 'Cooper.William', 'Hill.Alexander', 'Chrysty.Thomas', 'Revere.Paul', 'Parker.Jonathan', 'Lee.Joseph', 'Dolbear.Edward', 'Urann.Thomas', 'Wheeler.Josiah', 'Pulling.Richard', 'Cheever.Ezekiel', 'Newell.Eliphelet', 'Pearce.Isaac', 'Ash.Gilbert', 'Callendar.Elisha', 'Otis.James', 'Mackay.William', 'Phillips.John', 'Champney.Caleb', 'Field.Joseph', 'Frothingham.Nathaniel', 'Hunt.Abraham', 'Brown.Enoch', 'Bewer.James', 'Inglish.Alexander', 'Trott.George', 'Welles.Henry', 'Eckley.Unknown', 'Appleton.Nathaniel', 'Crafts.Thomas', 'Graham.James', 'Pierpont.Robert', 'Ham.William', 'Eayres.Joseph', 'Matchett.John', 'Hickling.William', 'Campbell.Nicholas', 'Dennie.William', 'Jenkins.John', 'Blake.Increase', 'Pitts.Lendall', 'Machin.Thomas', 'Partridge.Sam', 'Gould.William', 'Milliken.Thomas', 'Slater.Peter', 'Avery.John', 'Wyeth.Joshua', 'Lambert.John', 'Doyle.Peter', 'Baldwin.Cyrus', 'Greenleaf.William', 'Barnard.Samuel', 'Holmes.Nathaniel', 'Burton.Benjamin', 'Palfrey.William', 'Ferrell.Ambrose', 'Pierce.William', 'Ingersoll.Daniel', 'Hewes.George', 'Porter.Thomas', 'Grant.Moses', 'Foster.Bos', 'Greene.Nathaniel', 'Melville.Thomas', 'Randall.John', 'Boynton.Richard', 'Fleet.Thomas', 'Morse.Anthony', 'Dawes.Thomas', 'Lowell.John', 'Payson.Joseph', 'Clarke.Benjamin', 'Simpson.Benjamin', 'Sprague.Samuel', 'Lewis.Phillip', 'Hitchborn.Thomas', 'Eaton.Joseph', 'Ivers.James', 'Foster.Samuel', 'Hoffins.John', 'Davis.Caleb', 'Kent.Benjamin', 'Sessions.Robert', 'Bray.George', 'Cailleteau.Edward', 'Palms.Richard', 'Cochran.John', 'Sharp.Gibbens', 'Lincoln.Amos', 'Quincy.Josiah', 'Russell.John', 'Roby.Joseph', 'Gammell.John', 'Hobbs.Samuel', 'Noyces.Nat', 'Nicholls.Unknown', 'Potter.Edward', 'Emmes.Samuel', 'Proctor.Edward', 'Etheridge.William', 'Smith.John', 'Barrett.Samuel', 'Crane.John', 'Johonnott.Gabriel', 'Deshon.Moses', 'Pitts.John', 'Pulling.John', 'Purkitt.Henry', 'Vernon.Fortesque', 'Mountford.Joseph', 'Bruce.Stephen', 'Jarvis.Edward', 'Allen.Dr', 'Hicks.John', 'Marshall.Thomas', 'Story.Elisha', 'Kerr.Walter', 'Russell.William', 'Tabor.Philip', 'Peck.Samuel', 'Hancock.Eben', 'Williams.Jonathan', 'Wendell.Oliver', 'Church.Benjamin', 'Gray.Wait', 'Marlton.John', 'Sloper.Ambrose', 'Bass.Henry', 'Austin.Samuel', 'Palmer.Joseph', 'Stearns.Phineas', 'Johnston.Eben', 'Chase.Thomas', 'Symmes.Eben', 'Stanbridge.Henry', 'Whitten.John', 'Parkman.Elias', 'Burbeck.Edward', 'Davis.William', 'Greenleaf.Joseph', 'Morton.Perez', 'Brown.John', 'Winslow.John', 'Sigourney.John', 'Spear.Thomas', 'Webster.Thomas', 'Pearce.IsaacJun', 'Adams.Samuel', 'Dexter.Samuel', 'Davis.Edward', 'Bradlee.Josiah', 'Bell.William', 'Burbeck.William', 'Gill.Moses', 'Marett.Phillip', 'Tileston.Thomas', 'Williams.Thomas', 'Chipman.Seth', 'Bradlee.Thomas', 'Hendley.William', 'Jarvis.Charles', 'Marson.John', 'Peters.John', 'MacNeil.Archibald', 'Ruddock.Abiel', 'Hunnewell.Richard', 'Collson.Adam', 'Seward.James', 'Howe.Edward', 'Hunstable.Thomas', 'Young.Thomas']
+fig = plt.figure(figsize=(12,10))
 
+max_cluster_size = [max([len(c) for c in cluster]) for cluster in gn_clusters]
+plt.plot(x,max_cluster_size, color=colors[0], label='Max Cluster Size')
 
-- Make a list of all the popular people, i.e. with degree > 1 
+min_cluster_size = [min([len(c) for c in cluster]) for cluster in gn_clusters]
+plt.plot(x,min_cluster_size, color=colors[1], label='Minimum Cluster Size')
 
+mean_cluster_size = [np.mean([len(c) for c in cluster]) for cluster in gn_clusters]
+plt.plot(x,mean_cluster_size, color=colors[2], label='Mean Cluster Size')
 
-```python
-# Popular ppl with degree > 1
-popular_ppl = [person for person in ppl if G.degree(person) > 1]
-print(popular_ppl)
-```
+median_cluster_size = [np.median([len(c) for c in cluster]) for cluster in gn_clusters]
+plt.plot(x,median_cluster_size, color=colors[3], label='Median Cluster Size')
 
-    ['Hancock.John', 'Bradford.John', 'Edes.Benjamin', 'Barber.Nathaniel', 'Molineux.William', 'Swan.James', 'Adams.John', 'Powell.William', 'Winthrop.John', 'Condy.JamesFoster', 'Cooper.Samuel', 'Warren.Joseph', 'Revere.Paul', 'Urann.Thomas', 'Cheever.Ezekiel', 'Otis.James', 'Welles.Henry', 'Appleton.Nathaniel', 'Crafts.Thomas', 'Eayres.Joseph', 'Dennie.William', 'Avery.John', 'Greenleaf.William', 'Grant.Moses', 'Boynton.Richard', 'Davis.Caleb', 'Quincy.Josiah', 'Proctor.Edward', 'Barrett.Samuel', 'Pulling.John', 'Story.Elisha', 'Peck.Samuel', 'Wendell.Oliver', 'Church.Benjamin', 'Bass.Henry', 'Chase.Thomas', 'Parkman.Elias', 'Greenleaf.Joseph', 'Adams.Samuel', 'Ruddock.Abiel', 'Collson.Adam', 'Young.Thomas']
+single_node_clusters = [sum([1 if len(c)==1 else 0 for c in cluster]) for cluster in gn_clusters]
+plt.plot(x,single_node_clusters, color=colors[6], label='Number of Single Node Clusters')
 
+small_clusters = [sum([1 if len(c)<=5 else 0 for c in cluster ]) for cluster in gn_clusters]
+plt.plot(x,small_clusters, color=colors[5], label='Number of Small Clusters (5 or less nodes)')
 
-## Calculate Degree
-- Calculate the connection `LoyalNine` origanization has.
-
-
-```python
-# Calculate the connection LoyalNine origanization has
-G.degree('LoyalNine')
-```
-
-
-
-
-    10
-
-
-
-- Show the degree of all Organizations
-
-
-```python
-[G.degree(org) for org in orgs]
-```
-
-
-
-
-    [59, 21, 17, 62, 10, 53, 97]
-
-
-
-## Visualizations
-So let's get on with visualizations. It is recommended that you execute one step at a time and inspect the results before moving on. You can change settings for the plot to what suits your eyes better.
-
-Perform following tasks first:
-1. Create an empty canvas with figure size=15,15
-1. Create a spring layout with our graph `G`.
-1.  Go through every organization name in `orgs`, ask the graph how many connections it has. Multiply that by 100 to get the circle size
-1.  Use `nx.draw_networkx_nodes()` to draw the organizations with size calculated in the last step. Let's also color these `skyblue` (or one you prefer)
-1. Repeat last two steps for individuals in the `ppl` list. In `nx.draw_networkx_nodes()` use color `darkgrey` and node size = 100
-1. Repeat the process for third time, with popular people this time. use node size = 300 and color `salmon`. These might overlap a bit so set alpha = 0.5
-1. Now draw all the edges with `nx.draw_networkx_edges()`. set edge width = 2 and edge color as `lightgrey`.
-1. Create labels for the organizations (i.e. organization names) and draw these with `nx.draw_networkx_labels()`, set font size = 15.
-1. Set Plot Title as show.
-
-
-```python
-# 1. Fig size
-plt.figure(figsize=(13, 12))
-
-# 2. Create a layout for our nodes 
-layout = nx.spring_layout(G,iterations=100)
-
-# 3. Create org node size as degree*100
-org_node_size = [G.degree(org) * 100 for org in orgs]
-
-# 4. Draw the organizational nodes
-nx.draw_networkx_nodes(G, 
-                       layout, 
-                       nodelist=orgs, 
-                       node_size=org_node_size, # a LIST of sizes, based on g.degree
-                       node_color='skyblue')
-
-# 5. Draw all the people
-nx.draw_networkx_nodes(G, layout, nodelist=ppl, node_color='darkgrey', node_size=100)
-
-# 6. Draw popular individuals
-nx.draw_networkx_nodes(G, layout, nodelist=popular_ppl, node_color='salmon', node_size=300, alpha=0.5)
-
-# 7. Draw all the edges for the graph
-nx.draw_networkx_edges(G, layout, width=2, edge_color="lightgrey")
-
-# 8. Draw organization name labels to the graph
-node_labels = dict(zip(orgs, orgs))
-nx.draw_networkx_labels(G, layout, labels=node_labels, font_size=15, font_family='fantasy')
-
-# 9. Set a title and show the graph 
-plt.title("Revolutionary Clubs and Important Members")
-plt.axis('off')
+plt.legend(loc=(1.01,.75), fontsize=14)
+plt.title('Cluster Size Metrics versus Number of Edges Removed', fontsize=14)
+plt.xlabel('Number of Edges Removed', fontsize=14)
+plt.ylabel('Cluster Metric')
+plt.ylim(0,80)
+plt.yticks(ticks=list(range(0,80,5)))
 plt.show()
 ```
 
 
-![png](index_files/index_22_0.png)
+![png](index_files/index_23_0.png)
 
 
-## Summary 
+## Choose a Clustering 
 
-In this lab, we saw how to process, analyze and visualize bipartite graphs. You can try adding more visual cues (i.e. popular people names) etc. to make it more revealing. Also, this looks great as compared to the graphs we plotted in earlier lessons. Visualizing large graphs require interactivity, ability to zoom in and out and filter components to only focus on required information. That is all outside the scope of this section. For now we\ll move on towards looking deeperinto communities and how can we make our analysis more efficient using clustering etc. 
+Now that you have generated various clusters within the overall network, which do you think is the most appropriate or informative?
+
+
+```python
+print("Number of clusters:",len(gn_clusters[20]))
+plot_girvan_newman(G, gn_clusters[20])
+#This clustering representation was chosen after analyzing the plots above.
+#After the 20th edge is removed, max cluster size does not drastically drop again,
+#while small and single node clusters start to rapidly spawn. K-Clique clusters did not appear to be well developed.
+```
+
+    Number of clusters: 27
+
+
+
+![png](index_files/index_25_1.png)
+
+
+
+```python
+#While there is no definitive criteria for optimizing clusters, 
+#there is almost a 33% increase in the total number clusters here,
+#yet the same definitive clusters jump to the eye as above.
+#For this reason, it can be argued that the above clusters are more definitive and representative.
+print("Number of clusters:",len(gn_clusters[32]))
+plot_girvan_newman(G, gn_clusters[32])
+```
+
+    Number of clusters: 39
+
+
+
+![png](index_files/index_26_1.png)
+
+
+## Summary
+
+In this lab you practice using the k-clique and Girvan-Newman methods for clustering. Additionally, you may have also gotten a better sense of some of the current technological landscape. As you can start to see, network clustering provides you with powerful tools to further subset large networks into smaller constituencies allowing you to dig deeper into their particular characteristics.
